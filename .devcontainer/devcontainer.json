@@ -1,4 +1,4 @@
-// For format details, see https://aka.ms/vscode-remote/devcontainer.json or the definition README at
+// For ip details, see https://aka.ms/vscode-remote/devcontainer.json or the definition README at
 // https://github.com/microsoft/vscode-dev-containers/tree/master/containers/azure-functions-node-10
 {
 	"name": "Terraform, Azure CLI & Azure Functions & Node.js 12",
@@ -24,6 +24,8 @@
 		"ms-azuretools.vscode-azurefunctions",
 		"dbaeumer.vscode-eslint",
 		"mauve.terraform",
-		"davidanson.vscode-markdownlint"
+		"davidanson.vscode-markdownlint",
+		"ms-azuretools.vscode-azureterraform",
+		"hashicorp.terraform"
 	]
 }

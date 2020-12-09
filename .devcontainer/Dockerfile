@@ -18,7 +18,7 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y azure-cli dotnet-sdk-3.1
 
-RUN wget https://releases.hashicorp.com/terraform/0.12.25/terraform_0.12.25_linux_amd64.zip \
-    && unzip terraform_0.12.25_linux_amd64.zip \
+RUN wget https://releases.hashicorp.com/terraform/0.14.1/terraform_0.14.1_linux_amd64.zip \
+    && unzip terraform_0.14.1_linux_amd64.zip \
     && mv terraform /usr/local/bin/ \
-    && rm terraform_0.12.25_linux_amd64.zip
+    && rm terraform_0.14.1_linux_amd64.zip

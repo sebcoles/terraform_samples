@@ -1,7 +1,7 @@
 // For ip details, see https://aka.ms/vscode-remote/devcontainer.json or the definition README at
 // https://github.com/microsoft/vscode-dev-containers/tree/master/containers/azure-functions-node-10
 {
-	"name": "Terraform, Azure CLI & Azure Functions & Node.js 12",
+	"name": "Terraform, Azure CLI & Azure Functions",
 	"dockerFile": "Dockerfile",
 	"appPort": 7073,
 

@@ -265,8 +265,7 @@ By using the `-lock` it is possible to perform operations without taking a lock 
 
 ### Handle backend authentication methods
 
-Storing state in a remote backend requires credentials. If using "enhanced" backend on Terraform Cloud 
-then an API token is created and stored in a .credentials file in the local profile. For standard backends such as azurerm or s3 they have their own login attributes as part of the backend configuration.
+Storing state in a remote backend requires credentials. If using "enhanced" backend on Terraform Cloud then an API token is created and stored in a .credentials file in the local profile. For standard backends such as azurerm or s3 they have their own login attributes as part of the backend configuration.
 
 ### Describe remote state storage mechanisms and supported standard backends
 
@@ -325,7 +324,11 @@ output "aws_public_ip" {
 
 ### Describe secure secret injection best practice
 
+It is possible to use HashiCorp Vault as a provider with Terraform to configure secrets. Secrets will end up in state and the tfplan (seems a little odd).
+
 ### Understand the use of collection and structural types
+
+Terraform supports "complex" object types, these fall into 2 categories; either collections or structural. Collections are, for example, `list(...)` and `map(...)` which contain collection of key value pairs. Structural types are basically dynamic objects, such as `object({KEY:TYPE}, {KEY:TYPE})`.
 
 ### Create and differentiate resource and data configuration
 

@@ -8,4 +8,5 @@ variable "key_vault_id" {}
 variable "subnet_id" {}
 variable "subscription_id" {}
 variable "ip_restriction_subnet_id" {}
+variable "extra_app_settings" {}
 

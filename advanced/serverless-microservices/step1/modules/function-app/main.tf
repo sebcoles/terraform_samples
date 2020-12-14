@@ -8,7 +8,8 @@ locals {
   key_vault_id               = var.key_vault_id
   subnet_id                  = var.subnet_id
   subscription_id            = var.subscription_id
-  ip_restriction_subnet_id = var.ip_restriction_subnet_id
+  ip_restriction_subnet_id   = var.ip_restriction_subnet_id
+  extra_app_settings         = var.extra_app_settings
 }
 
 resource "azurerm_function_app" "fa" {
@@ -22,12 +23,15 @@ resource "azurerm_function_app" "fa" {
   https_only                 = true
   version                    = "~3"
 
-  app_settings = {
-    FUNCTIONS_WORKER_RUNTIME     = "node"
-    WEBSITE_NODE_DEFAULT_VERSION = "~12"
-    WEBSITE_RUN_FROM_PACKAGE     = "1"
-    FUNCTION_APP_EDIT_MODE       = "readonly"
-  }
+  app_settings = merge(
+    {
+      FUNCTIONS_WORKER_RUNTIME     = "node"
+      WEBSITE_NODE_DEFAULT_VERSION = "~12"
+      WEBSITE_RUN_FROM_PACKAGE     = "1"
+      FUNCTION_APP_EDIT_MODE       = "readonly"
+    },
+    local.extra_app_settings
+  )
 
   site_config {
     ftps_state = "Disabled"
@@ -56,17 +60,4 @@ resource "azurerm_app_service_virtual_network_swift_connection" "vnet_int" {
   subnet_id      = local.subnet_id
 }
 
-data "external" "fa_host_key" {
-  program = ["bash", "-c", "az rest --method post --uri /subscriptions/${local.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Web/sites/${local.function_name}/host/default/listKeys?api-version=2019-08-01 --query functionKeys"]
-
-  depends_on = [
-    azurerm_function_app.fa
-  ]
-}
-
-resource "azurerm_key_vault_secret" "fa_host_key" {
-  name         = "fa-${azurerm_function_app.fa.name}-host-key"
-  value        = data.external.fa_host_key.result.default
-  key_vault_id = local.key_vault_id
-}
 

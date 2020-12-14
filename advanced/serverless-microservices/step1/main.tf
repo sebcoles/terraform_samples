@@ -25,7 +25,7 @@ resource "azurerm_resource_group" "rg" {
 # KEY VAULT
 #########################################################
 resource "azurerm_key_vault" "kv" {
-  name                            = local.project_name
+  name                            = "${local.project_name}-kv"
   location                        = local.location
   resource_group_name             = azurerm_resource_group.rg.name
   tenant_id                       = local.tenant_id
@@ -53,7 +53,7 @@ resource "azurerm_key_vault_access_policy" "sp" {
 # NETWORKS
 #########################################################
 resource "azurerm_network_security_group" "nsg" {
-  name                = "nsg"
+  name                = "${local.project_name}-nsg"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -95,7 +95,7 @@ resource "azurerm_subnet" "subnet" {
   virtual_network_name = azurerm_virtual_network.virtual_network.name
   address_prefixes     = ["10.0.0.0/27"]
 
-    delegation {
+  delegation {
     name = "fadelegation"
 
     service_delegation {
@@ -112,10 +112,11 @@ resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
+
 #########################################################
 # COSMOS DB
 #########################################################
-module "cosmos_db" {
+/* module "cosmos_db" {
   source              = "./modules/cosmos-db"
   resource_group_name = azurerm_resource_group.rg.name
   location            = local.location
@@ -125,13 +126,13 @@ module "cosmos_db" {
   depends_on = [
     azurerm_key_vault_access_policy.sp
   ]
-}
+} */
 
 #########################################################
 # FUNCTIONS
 #########################################################
 resource "azurerm_app_service_plan" "service_plan" {
-  name                         = local.project_name
+  name                         = "${local.project_name}-plan"
   resource_group_name          = azurerm_resource_group.rg.name
   location                     = local.location
   kind                         = "elastic"
@@ -165,10 +166,13 @@ module "function_date" {
   key_vault_id               = azurerm_key_vault.kv.id
   subnet_id                  = azurerm_subnet.subnet.id
   subscription_id            = local.subscription_id
-  ip_restriction_subnet_id         = azurerm_subnet.subnet.id
+  ip_restriction_subnet_id   = azurerm_subnet.subnet.id
+
+  extra_app_settings = {
+  }
 }
 
-module "function_cosmos_data" {
+/* module "function_cosmos_data" {
   source                     = "./modules/function-app"
   location                   = local.location
   resource_group_name        = azurerm_resource_group.rg.name
@@ -179,63 +183,8 @@ module "function_cosmos_data" {
   key_vault_id               = azurerm_key_vault.kv.id
   subnet_id                  = azurerm_subnet.subnet.id
   subscription_id            = local.subscription_id
-  ip_restriction_subnet_id         = azurerm_subnet.subnet.id
-}
-
-#########################################################
-# APIM
-#########################################################
-/* resource "azurerm_api_management" "apim" {
-  name                 = local.project_name
-  resource_group_name  = azurerm_resource_group.rg.name
-  location             = local.location
-  publisher_name       = local.publisher_name
-  publisher_email      = local.publisher_email
-  virtual_network_type = "External"
-
-  sku_name = "Developer_1"
-
-  virtual_network_configuration {
-    subnet_id = azurerm_subnet.subnet.id
+  ip_restriction_subnet_id   = azurerm_subnet.subnet.id
+  extra_app_settings = {
+    mongo_connection_string = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.cosmos_conn.id})"
   }
-
-  identity {
-    type = "SystemAssigned"
-  }
-}
-
-module "apim_api_date" {
-  source              = "./modules/apim-api"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = local.location
-  api_name            = "date"
-  api_management_name = "date"
-  default_hostname    = module.function_date.default_hostname
-  host_key            = module.function_date.host_key
-  key_vault_id        = azurerm_key_vault.kv.id
-}
-
-module "apim_api_cosmos" {
-  source              = "./modules/apim-api"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = local.location
-  api_name            = "cosmos"
-  api_management_name = "cosmos"
-  default_hostname    = module.function_cosmos_data.default_hostname
-  host_key            = module.function_cosmos_data.host_key
-  key_vault_id        = azurerm_key_vault.kv.id
-}
-
-resource "azurerm_key_vault_access_policy" "apim" {
-  key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = azurerm_api_management.apim.identity[0].tenant_id
-  object_id    = azurerm_api_management.apim.identity[0].principal_id
-
-  secret_permissions = [
-    "Get"
-  ]
 } */
-
-
-
-

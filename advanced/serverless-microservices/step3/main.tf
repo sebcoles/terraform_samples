@@ -2,76 +2,41 @@
 # Variables
 #########################################################
 locals {
-  project_name        = var.project_name
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  tenant_id           = var.tenant_id
-  prinicipal_id       = var.prinicipal_id
-  publisher_name      = var.publisher_name
-  publisher_email     = var.publisher_email
-  subscription_id     = var.subscription_id
-}
-
-
-#########################################################
-# Resource Group
-#########################################################
-resource "azurerm_resource_group" "rg" {
-  name     = local.resource_group_name
-  location = local.location
+  project_name            = var.project_name
+  resource_group_name     = var.resource_group_name
+  location                = var.location
+  publisher_name          = var.publisher_name
+  publisher_email         = var.publisher_email
+  subscription_id         = var.subscription_id
+  date_function_name      = var.date_function_name
+  date_default_hostname   = var.date_default_hostname
+  cosmos_function_name    = var.cosmos_function_name
+  cosmos_default_hostname = var.cosmos_default_hostname
 }
 
 #########################################################
-# KEY VAULT
+# Key Vault & Host Keys
 #########################################################
-resource "azurerm_key_vault" "kv" {
-  name                            = "${local.project_name}-kv"
-  location                        = local.location
-  resource_group_name             = azurerm_resource_group.rg.name
-  tenant_id                       = local.tenant_id
-  sku_name                        = "standard"
-  enabled_for_deployment          = false
-  enabled_for_disk_encryption     = false
-  enabled_for_template_deployment = false
+data "azurerm_subnet" "apim_snet" {
+  name                 = "${local.project_name}-apim-snet"
+  resource_group_name  = local.resource_group_name
+  virtual_network_name = "MyVNET"
 }
 
 #########################################################
-# APIM
+# Key Vault & Host Keys
 #########################################################
-data "external" "fa_host_key" {
-  program = ["bash", "-c", "az rest --method post --uri /subscriptions/${local.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Web/sites/${local.function_name}/host/default/listKeys?api-version=2019-08-01 --query functionKeys"]
-
-  depends_on = [
-    azurerm_function_app.fa
-  ]
-}
-
-resource "azurerm_key_vault_secret" "fa_host_key" {
-  name         = "fa-${azurerm_function_app.fa.name}-host-key"
-  value        = data.external.fa_host_key.result.default
-  key_vault_id = local.key_vault_id
-}
-
-data "external" "fa_host_key" {
-  program = ["bash", "-c", "az rest --method post --uri /subscriptions/${local.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Web/sites/${local.function_name}/host/default/listKeys?api-version=2019-08-01 --query functionKeys"]
-
-  depends_on = [
-    azurerm_function_app.fa
-  ]
-}
-
-resource "azurerm_key_vault_secret" "fa_host_key" {
-  name         = "fa-${azurerm_function_app.fa.name}-host-key"
-  value        = data.external.fa_host_key.result.default
-  key_vault_id = local.key_vault_id
+data "azurerm_key_vault" "kv" {
+  name                = "${local.project_name}-kv"
+  resource_group_name = local.resource_group_name
 }
 
 #########################################################
 # APIM
 #########################################################
 resource "azurerm_api_management" "apim" {
-  name                 = local.project_name
-  resource_group_name  = azurerm_resource_group.rg.name
+  name                 = "${local.project_name}215f9"
+  resource_group_name  = local.resource_group_name
   location             = local.location
   publisher_name       = local.publisher_name
   publisher_email      = local.publisher_email
@@ -80,7 +45,7 @@ resource "azurerm_api_management" "apim" {
   sku_name = "Developer_1"
 
   virtual_network_configuration {
-    subnet_id = azurerm_subnet.subnet.id
+    subnet_id = data.azurerm_subnet.apim_snet.id
   }
 
   identity {
@@ -90,28 +55,36 @@ resource "azurerm_api_management" "apim" {
 
 module "apim_api_date" {
   source              = "./modules/apim-api"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = local.resource_group_name
   location            = local.location
-  api_name            = "date"
-  api_management_name = "date"
-  default_hostname    = module.function_date.default_hostname
-  host_key            = module.function_date.host_key
-  key_vault_id        = azurerm_key_vault.kv.id
+  api_management_name = azurerm_api_management.apim.name
+  default_hostname    = local.date_default_hostname
+  key_vault_id        = data.azurerm_key_vault.kv.id
+  subscription_id     = local.subscription_id
+  function_name       = local.date_function_name
+
+  depends_on = [ 
+    azurerm_api_management.apim
+   ]
 }
 
-module "apim_api_cosmos" {
+/* module "apim_api_cosmos" {
   source              = "./modules/apim-api"
   resource_group_name = azurerm_resource_group.rg.name
   location            = local.location
-  api_name            = "cosmos"
   api_management_name = "cosmos"
-  default_hostname    = module.function_cosmos_data.default_hostname
-  host_key            = module.function_cosmos_data.host_key
-  key_vault_id        = azurerm_key_vault.kv.id
-}
+  default_hostname    = local.cosmos_default_hostname
+  key_vault_id        = data.azurerm_key_vault.kv.id
+    subscription_id     = local.subscription_id
+  function_name       = local.date_function_name
+
+    depends_on = [ 
+    azurerm_api_management.apim
+   ]
+} */
 
 resource "azurerm_key_vault_access_policy" "apim" {
-  key_vault_id = azurerm_key_vault.kv.id
+  key_vault_id = data.azurerm_key_vault.kv.id
   tenant_id    = azurerm_api_management.apim.identity[0].tenant_id
   object_id    = azurerm_api_management.apim.identity[0].principal_id
 

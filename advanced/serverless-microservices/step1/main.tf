@@ -5,13 +5,9 @@ locals {
   project_name        = var.project_name
   resource_group_name = var.resource_group_name
   location            = var.location
-  tenant_id           = var.tenant_id
-  prinicipal_id       = var.prinicipal_id
-  publisher_name      = var.publisher_name
-  publisher_email     = var.publisher_email
-  subscription_id     = var.subscription_id
 }
 
+data "azurerm_client_config" "current" {}
 
 #########################################################
 # Resource Group
@@ -28,7 +24,7 @@ resource "azurerm_key_vault" "kv" {
   name                            = "${local.project_name}-kv"
   location                        = local.location
   resource_group_name             = azurerm_resource_group.rg.name
-  tenant_id                       = local.tenant_id
+  tenant_id                       = data.azurerm_client_config.current.tenant_id
   sku_name                        = "standard"
   enabled_for_deployment          = false
   enabled_for_disk_encryption     = false
@@ -37,8 +33,8 @@ resource "azurerm_key_vault" "kv" {
 
 resource "azurerm_key_vault_access_policy" "sp" {
   key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = local.tenant_id
-  object_id    = local.prinicipal_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
 
   secret_permissions = [
     "delete",
@@ -59,7 +55,7 @@ resource "azurerm_network_security_group" "nsg" {
 
   security_rule {
     name                       = "http"
-    priority                   = 100
+    priority                   = 101
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
@@ -70,7 +66,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 
   security_rule {
-    name                       = "http"
+    name                       = "https"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
@@ -107,6 +103,14 @@ resource "azurerm_subnet" "subnet" {
   service_endpoints = ["Microsoft.Web"]
 }
 
+resource "azurerm_subnet" "apim_snet" {
+  name                 = "${local.project_name}-apim-snet"
+  resource_group_name  = local.resource_group_name
+  virtual_network_name = "MyVNET"
+  address_prefixes     = ["10.0.0.96/28"]
+  service_endpoints    = ["Microsoft.Web"]
+}
+
 resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
   subnet_id                 = azurerm_subnet.subnet.id
   network_security_group_id = azurerm_network_security_group.nsg.id
@@ -116,17 +120,51 @@ resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
 #########################################################
 # COSMOS DB
 #########################################################
-/* module "cosmos_db" {
-  source              = "./modules/cosmos-db"
-  resource_group_name = azurerm_resource_group.rg.name
+resource "azurerm_cosmosdb_account" "cosmos" {
+  name                = "${local.project_name}-cosmos"
+  resource_group_name = local.resource_group_name
   location            = local.location
-  app_name            = local.project_name
-  key_vault_id        = azurerm_key_vault.kv.id
+  offer_type          = "Standard"
+  kind                = "MongoDB"
 
-  depends_on = [
-    azurerm_key_vault_access_policy.sp
-  ]
-} */
+  enable_automatic_failover = false
+
+  consistency_policy {
+    consistency_level = "Strong"
+  }
+
+  geo_location {
+    location          = local.location
+    failover_priority = 0
+  }
+
+  capabilities {
+    name = "EnableMongo"
+  }
+}
+
+resource "azurerm_cosmosdb_mongo_database" "mongodb" {
+  name                = "${local.project_name}-cosmos"
+  resource_group_name = azurerm_cosmosdb_account.cosmos.resource_group_name
+  account_name        = azurerm_cosmosdb_account.cosmos.name
+}
+
+resource "azurerm_cosmosdb_mongo_collection" "table" {
+  name                = "${local.project_name}-cosmos"
+  resource_group_name = azurerm_cosmosdb_mongo_database.mongodb.resource_group_name
+  account_name        = azurerm_cosmosdb_mongo_database.mongodb.account_name
+  database_name       = azurerm_cosmosdb_mongo_database.mongodb.name
+  shard_key           = "_shardKey"
+  throughput          = 400
+
+  index { keys = ["_id"] }
+}
+
+resource "azurerm_key_vault_secret" "cosmos_conn" {
+  name         = "cosmos-conn"
+  value        = "${azurerm_cosmosdb_account.cosmos.connection_strings[0]}&retryWrites=false"
+  key_vault_id = azurerm_key_vault.kv.id
+}
 
 #########################################################
 # FUNCTIONS
@@ -165,14 +203,13 @@ module "function_date" {
   storage_account_access_key = azurerm_storage_account.sa.primary_access_key
   key_vault_id               = azurerm_key_vault.kv.id
   subnet_id                  = azurerm_subnet.subnet.id
-  subscription_id            = local.subscription_id
-  ip_restriction_subnet_id   = azurerm_subnet.subnet.id
+  ip_restriction_subnet_id   = azurerm_subnet.apim_snet.id
 
   extra_app_settings = {
   }
 }
 
-/* module "function_cosmos_data" {
+module "function_cosmos_data" {
   source                     = "./modules/function-app"
   location                   = local.location
   resource_group_name        = azurerm_resource_group.rg.name
@@ -182,9 +219,8 @@ module "function_date" {
   storage_account_access_key = azurerm_storage_account.sa.primary_access_key
   key_vault_id               = azurerm_key_vault.kv.id
   subnet_id                  = azurerm_subnet.subnet.id
-  subscription_id            = local.subscription_id
   ip_restriction_subnet_id   = azurerm_subnet.subnet.id
   extra_app_settings = {
     mongo_connection_string = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.cosmos_conn.id})"
   }
-} */
+}

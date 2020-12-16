@@ -432,3 +432,32 @@ Cloud workspaces are a managed offering for providing an environments to run ter
 ### Summarize features of Terraform Cloud
 
 Terraform provide a cloud offering (Terraform Cloud) which provides an enviroment to run terraform from and handles remote state. They claim easy access to shared states, secrets solution, access control, a private registry for modules and policy controls. This is free for small teams and charges for medium teams.
+
+## Functions
+
+### zipmap
+
+`zipmap` takes x2 lists of the same length. Creates a map using the first list as as keys and the second list as values. Returns object, not a list.
+
+### index
+
+`lookup(map_of_values, what_to_look_For, default_if_not_found)`
+
+`index` finds the element index for a given value in a list starting with index 0. Therefore, "a" is at index 0, "b" is at index 1, and "c" is at index 2.
+
+### lookup
+
+`lookup` retrieves the value of a single element from a map, given its key. If the given key does not exist, the given default value is returned instead. In this case, the function call is searching for the key "c". Because there is no key "c", the default value of "what?" is returned.
+
+## Trivia
+
+- Terraform will concurrently provision yo to 10 resources in parralel.
+- Terraform OSS stored the local state in terraform.tfstate.d
+- Terraform can pickup environments variables as variables by using the prefix `TC_VAR`
+- Terraform version 0.12 introduced substantial syntax changes
+- Terraform will pickup providers either through explicit block declaration, usage of a resource belonging to a provider or if any resource esists in state.
+- Ref is used in the git URL to determine a tag version
+- HCL recommends 2 spaces between each nested level
+- Clustered deployments require a PostgreSQL backend
+- If a resource is created succesfully but fails provisioning, it will be marked as tainted.
+- `terraform console` starts an interactive console to evaulate expressions

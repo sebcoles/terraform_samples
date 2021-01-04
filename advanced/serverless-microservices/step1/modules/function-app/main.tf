@@ -25,10 +25,7 @@ resource "azurerm_function_app" "fa" {
 
   app_settings = merge(
     {
-      FUNCTIONS_WORKER_RUNTIME     = "node"
-      WEBSITE_NODE_DEFAULT_VERSION = "~12"
       WEBSITE_RUN_FROM_PACKAGE     = "1"
-      FUNCTION_APP_EDIT_MODE       = "readonly"
     },
     local.extra_app_settings
   )

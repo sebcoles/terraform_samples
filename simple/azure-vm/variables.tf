@@ -28,14 +28,14 @@ variable "admin_sshkey" {
 
 #"The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
 variable "ubuntu_os_version_map" {
-  type = map
+  type = map(any)
   default = {
     "18.04-LTS" = "18.04-LTS"
   }
 }
 
 variable "config" {
-  type = map
+  type = map(any)
   default = {
     "image_publisher"          = "Canonical"
     "image_offer"              = "UbuntuServer"
@@ -53,7 +53,7 @@ variable "config" {
 }
 
 variable "prefixes" {
-  type = map
+  type = map(any)
   default = {
     "address_prefixes" = ["10.0.0.0/24"]
   }

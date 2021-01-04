@@ -103,19 +103,10 @@ resource "azurerm_subnet" "subnet" {
   service_endpoints = ["Microsoft.Web"]
 }
 
-resource "azurerm_subnet" "apim_snet" {
-  name                 = "${local.project_name}-apim-snet"
-  resource_group_name  = local.resource_group_name
-  virtual_network_name = "MyVNET"
-  address_prefixes     = ["10.0.0.96/28"]
-  service_endpoints    = ["Microsoft.Web"]
-}
-
 resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
   subnet_id                 = azurerm_subnet.subnet.id
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
-
 
 #########################################################
 # COSMOS DB
@@ -220,6 +211,7 @@ module "function_cosmos_data" {
   key_vault_id               = azurerm_key_vault.kv.id
   subnet_id                  = azurerm_subnet.subnet.id
   ip_restriction_subnet_id   = azurerm_subnet.subnet.id
+  
   extra_app_settings = {
     mongo_connection_string = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.cosmos_conn.id})"
   }

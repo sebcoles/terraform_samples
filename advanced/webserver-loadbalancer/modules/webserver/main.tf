@@ -21,15 +21,15 @@ resource "azurerm_virtual_machine" "virtual_machine" {
   network_interface_ids = [azurerm_network_interface.network_interface.id]
   vm_size               = "Standard_F1"
   availability_set_id   = var.availability_set_id
-  
+
 
   os_profile {
-    computer_name  = substr(random_id.random.hex,0,10)
+    computer_name  = substr(random_id.random.hex, 0, 10)
     admin_username = var.admin_username
     admin_password = var.admin_password
-    
+
   }
-  
+
   storage_image_reference {
     publisher = "MicrosoftWindowsServer"
     offer     = "WindowsServer"
@@ -38,15 +38,15 @@ resource "azurerm_virtual_machine" "virtual_machine" {
   }
 
   storage_os_disk {
-    name          = "osdisk1_${random_id.random.hex}"
-    caching       = "ReadWrite"
-    create_option = "FromImage"
+    name              = "osdisk1_${random_id.random.hex}"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
 
   os_profile_windows_config {
-    provision_vm_agent = true    
-        
+    provision_vm_agent = true
+
   }
 }
 

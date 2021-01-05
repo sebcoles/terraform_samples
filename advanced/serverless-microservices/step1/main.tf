@@ -194,8 +194,6 @@ module "function_date" {
   storage_account_access_key = azurerm_storage_account.sa.primary_access_key
   key_vault_id               = azurerm_key_vault.kv.id
   subnet_id                  = azurerm_subnet.subnet.id
-  ip_restriction_subnet_id   = azurerm_subnet.apim_snet.id
-
   extra_app_settings = {
   }
 }
@@ -209,9 +207,7 @@ module "function_cosmos_data" {
   storage_account_name       = azurerm_storage_account.sa.name
   storage_account_access_key = azurerm_storage_account.sa.primary_access_key
   key_vault_id               = azurerm_key_vault.kv.id
-  subnet_id                  = azurerm_subnet.subnet.id
-  ip_restriction_subnet_id   = azurerm_subnet.subnet.id
-  
+  subnet_id                  = azurerm_subnet.subnet.id  
   extra_app_settings = {
     mongo_connection_string = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.cosmos_conn.id})"
   }

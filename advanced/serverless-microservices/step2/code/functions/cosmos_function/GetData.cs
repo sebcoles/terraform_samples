@@ -26,7 +26,6 @@ namespace cosmos_function
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-
             var mongo_connection_string = ConfigurationManager.AppSettings["mongo_connection_string"];
             _cosmosClient = new CosmosClient(mongo_connection_string);
             _database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(databaseId);

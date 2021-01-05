@@ -20,10 +20,20 @@ zip -r "$STAGING_DIRECTORY/cosmos.zip" "$STAGING_DIRECTORY/cosmos/"
 zip -r "$STAGING_DIRECTORY/date.zip" "$STAGING_DIRECTORY/date/"
 
 # DEPLOY #
+az webapp config appsettings set \
+-g $RESOURCE_GROUP \
+-n $COSMOS_FUNCTION_NAME \
+--settings WEBSITE_RUN_FROM_PACKAGE="1"
+
 az functionapp deployment source config-zip \
 -g $RESOURCE_GROUP \
 -n $COSMOS_FUNCTION_NAME \
 --src "$STAGING_DIRECTORY/cosmos.zip"
+
+az webapp config appsettings set \
+-g $RESOURCE_GROUP \
+-n $DATE_FUNCTION_NAME \
+--settings WEBSITE_RUN_FROM_PACKAGE="1"
 
 az functionapp deployment source config-zip \
 -g $RESOURCE_GROUP \

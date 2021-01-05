@@ -39,5 +39,6 @@ terraform.rc
 *.tfplan
 
 **/staging/*
-advanced/serverless-microservices/step2/code/functions/.vs/functions/DesignTimeBuild/.dtbcache.v2
-advanced/serverless-microservices/step2/code/functions/.vs/functions/v16/.suo
+*.dtbcache.v2
+*.suo
+

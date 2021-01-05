@@ -7,8 +7,6 @@ locals {
   storage_account_access_key = var.storage_account_access_key
   key_vault_id               = var.key_vault_id
   subnet_id                  = var.subnet_id
-  subscription_id            = var.subscription_id
-  ip_restriction_subnet_id   = var.ip_restriction_subnet_id
   extra_app_settings         = var.extra_app_settings
 }
 
@@ -32,9 +30,6 @@ resource "azurerm_function_app" "fa" {
 
   site_config {
     ftps_state = "Disabled"
-    ip_restriction {
-      virtual_network_subnet_id = var.ip_restriction_subnet_id
-    }
   }
 
   identity {
